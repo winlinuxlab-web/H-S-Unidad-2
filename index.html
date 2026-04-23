@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trainer de Linux - Docente NMZ</title>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary-pastel: #a2d2ff;
+            --secondary-pastel: #bdf7d5;
+            --accent-pastel: #ffccf9;
+            --text-color: #4a4e69;
+            --correct: #c1e1c1;
+            --incorrect: #ffb7b2;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 { color: #6d597a; font-size: 1.5rem; }
+        .footer-tag { font-size: 0.8rem; color: #9a8c98; margin-top: 10px; }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .question-box {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            min-height: 60px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        button.option {
+            background-color: var(--bg-color);
+            border: 2px solid var(--primary-pastel);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        button.option:hover {
+            background-color: var(--primary-pastel);
+            transform: translateY(-2px);
+        }
+
+        .correct { background-color: var(--correct) !important; border-color: #8fb38f !important; }
+        .incorrect { background-color: var(--incorrect) !important; border-color: #e59a94 !important; }
+
+        #next-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: none;
+            background-color: var(--secondary-pastel);
+            color: #2d6a4f;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        #next-btn:hover { background-color: #9de4ba; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🐧 Linux Quiz Trainer</h1>
+        <div class="stats">
+            <span>Pregunta: <span id="current-q">0</span>/10</span>
+            <span>Aciertos: <span id="score">0</span></span>
+        </div>
+
+        <div id="quiz-area">
+            <div class="question-box" id="question">Cargando pregunta...</div>
+            <div class="options-grid" id="options"></div>
+            <button id="next-btn" onclick="nextQuestion()">Siguiente Pregunta ✨</button>
+        </div>
+
+        <div class="footer-tag">Docente NMZ - versión 1 - 2026<br>Instituto Diego Portales</div>
+    </div>
+
+    <script>
+        const rawData = [
+            { q: "¿Qué función principal cumple un sistema operativo?", a: "Administrar los recursos del hardware y permitir la ejecución de aplicaciones" },
+            { q: "¿Qué es una distribución Linux?", a: "Una versión del sistema operativo Linux con herramientas y configuraciones específicas" },
+            { q: "¿Por qué es importante revisar los requisitos de hardware antes de instalar un sistema operativo?", a: "Para asegurar compatibilidad y buen rendimiento del sistema" },
+            { q: "¿Qué ventaja tiene Linux en servidores?", a: "Alta estabilidad y seguridad" },
+            { q: "¿Qué es una partición en Linux?", a: "Una división lógica de un disco duro" },
+            { q: "¿Cuál es una ventaja de crear varias particiones?", a: "Permitizar organizar y aislar la información" },
+            { q: "¿Qué característica tiene GPT frente a MBR?", a: "Permite más particiones y discos más grandes" },
+            { q: "¿Qué comando se utiliza para crear particiones?", a: "fdisk" },
+            { q: "¿Por qué se debe formatear una partición?", a: "Para definir el sistema de archivos" },
+            { q: "¿Qué sistema de archivos es común en Linux?", a: "ext4" },
+            { q: "¿Qué es la partición swap?", a: "Espacio en disco usado como memoria virtual" },
+            { q: "¿Qué es el usuario root?", a: "Usuario administrador con control total" },
+            { q: "¿Qué comando crea un usuario en Linux?", a: "useradd" },
+            { q: "¿Dónde se almacena la información de usuarios?", a: "/etc/passwd" },
+            { q: "¿Qué es el UID?", a: "Identificador único de usuario" },
+            { q: "¿Por qué son importantes los permisos en Linux?", a: "Para controlar el acceso a archivos y seguridad" },
+            { q: "¿Qué comando elimina un usuario?", a: "userdel" },
+            { q: "¿Qué es una ruta absoluta?", a: "Ruta que inicia desde la raíz del sistema" },
+            { q: "¿Qué comando crea un directorio?", a: "mkdir" },
+            { q: "¿Qué comando lista archivos?", a: "ls" },
+            { q: "¿Qué hace el comando mv?", a: "Mueve o renombra archivos" },
+            { q: "¿Qué hace chmod?", a: "Modifica permisos de archivos o directorios" },
+            { q: "¿Qué significa el permiso 'r'?", a: "Leer" },
+            { q: "¿Qué archivo permite montar particiones automáticamente?", a: "/etc/fstab" },
+            { q: "¿Qué comando cuenta las líneas de un archivo?", a: "wc -l" },
+            { q: "¿Qué comando muestra la ruta del directorio actual?", a: "pwd" },
+            { q: "¿Qué comando se usa para formatear una partición como ext4?", a: "mkfs.ext4 /dev/sdb1" },
+            { q: "¿Qué comando se usa para montar una partición?", a: "mount /dev/sdb1 /datos" },
+            { q: "¿Qué comando busca un archivo por nombre desde la raíz?", a: "find / -name config.txt" }
+        ];
+
+        // Mezclar las preguntas pero solo usaremos 10 por sesión
+        let questions = [];
+        let currentIndex = 0;
+        let score = 0;
+        const totalPerSession = 10;
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function initQuiz() {
+            questions = shuffle([...rawData]).slice(0, totalPerSession);
+            currentIndex = 0;
+            score = 0;
+            updateStats();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const qData = questions[currentIndex];
+            document.getElementById('question').innerText = qData.q;
+            document.getElementById('next-btn').style.display = 'none';
+            
+            // Generar opciones falsas (distractores aleatorios)
+            let options = [qData.a];
+            while(options.length < 4) {
+                let randomA = rawData[Math.floor(Math.random() * rawData.length)].a;
+                if(!options.includes(randomA)) options.push(randomA);
+            }
+            
+            shuffle(options);
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.classList.add('option');
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, opt, qData.a);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(btn, selected, correct) {
+            const allBtns = document.querySelectorAll('.option');
+            allBtns.forEach(b => b.disabled = true);
+
+            if(selected === correct) {
+                btn.classList.add('correct');
+                score++;
+            } else {
+                btn.classList.add('incorrect');
+                allBtns.forEach(b => {
+                    if(b.innerText === correct) b.classList.add('correct');
+                });
+            }
+            updateStats();
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if(currentIndex < totalPerSession) {
+                showQuestion();
+            } else {
+                document.getElementById('quiz-area').innerHTML = `<h2>🎉 ¡Fin del entrenamiento!</h2><p>Tu puntaje final es ${score} de ${totalPerSession}</p><button onclick="location.reload()" class="option">Intentar de nuevo</button>`;
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('current-q').innerText = currentIndex + (currentIndex < totalPerSession ? 1 : 0);
+            document.getElementById('score').innerText = score;
+        }
+
+        initQuiz();
+    </script>
+</body>
+</html>
