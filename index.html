@@ -101,7 +101,7 @@
 <body>
 
     <div class="container">
-        <h1>🐧 Desafío Linux</h1>
+        <h1> Desafío Linux</h1>
         <span class="subtitle">INACAP 2026</span>
         
         <div class="stats">
@@ -138,4 +138,107 @@
             { q: "¿Por qué son importantes los permisos en Linux?", a: "Para controlar el acceso a archivos y seguridad" },
             { q: "¿Qué comando elimina un usuario?", a: "userdel" },
             { q: "¿Qué es una ruta absoluta?", a: "Ruta que inicia desde la raíz del sistema" },
-            { q: "¿Qué comando crea un directorio?", a: "
+            { q: "¿Qué comando crea un directorio?", a: "mkdir" },
+            { q: "¿Qué comando lista archivos?", a: "ls" },
+            { q: "¿Qué hace el comando mv?", a: "Mueve o renombra archivos" },
+            { q: "¿Qué hace chmod?", a: "Modifica permisos de archivos o directorios" },
+            { q: "¿Qué significa el permiso 'r'?", a: "Leer" },
+            { q: "¿Qué archivo permite montar particiones automáticamente?", a: "/etc/fstab" },
+            { q: "¿Qué comando cuenta las líneas de un archivo?", a: "wc -l" },
+            { q: "¿Qué comando muestra la ruta del directorio actual?", a: "pwd" },
+            { q: "¿Qué comando se usa para formatear una partición como ext4?", a: "mkfs.ext4 /dev/sdb1" },
+            { q: "¿Qué comando se usa para montar una partición?", a: "mount /dev/sdb1 /datos" },
+            { q: "¿Qué comando busca un archivo por nombre desde la raíz?", a: "find / -name config.txt" },
+            { q: "¿Cuál es la función del comando rm?", a: "Eliminar archivos o directorios" },
+            { q: "¿Qué comando se usa para visualizar el contenido de un archivo sin editarlo?", a: "cat" },
+            { q: "¿Qué herramienta se usa comúnmente para editar archivos de texto en terminal?", a: "nano" },
+            { q: "¿Qué comando permite buscar patrones de texto dentro de archivos?", a: "grep" }
+        ];
+
+        let questions = [];
+        let currentIndex = 0;
+        let score = 0;
+        const totalPerSession = 10;
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function initQuiz() {
+            questions = shuffle([...rawData]).slice(0, totalPerSession);
+            currentIndex = 0;
+            score = 0;
+            updateStats();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const qData = questions[currentIndex];
+            document.getElementById('question').innerText = qData.q;
+            document.getElementById('next-btn').style.display = 'none';
+            
+            let options = [qData.a];
+            while(options.length < 4) {
+                let randomA = rawData[Math.floor(Math.random() * rawData.length)].a;
+                if(!options.includes(randomA)) options.push(randomA);
+            }
+            
+            shuffle(options);
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.classList.add('option');
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(btn, opt, qData.a);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(btn, selected, correct) {
+            const allBtns = document.querySelectorAll('.option');
+            allBtns.forEach(b => b.disabled = true);
+
+            if(selected === correct) {
+                btn.classList.add('correct');
+                score++;
+            } else {
+                btn.classList.add('incorrect');
+                allBtns.forEach(b => {
+                    if(b.innerText === correct) b.classList.add('correct');
+                });
+            }
+            updateStats();
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if(currentIndex < totalPerSession) {
+                showQuestion();
+            } else {
+                showFinalResult();
+            }
+        }
+
+        function showFinalResult() {
+            const area = document.getElementById('quiz-area');
+            let message = score >= 7 ? "¡Excelente trabajo!" : "¡Sigue practicando!";
+            area.innerHTML = `
+                <div style="font-size: 4rem; margin-bottom: 10px;"></div>
+                <h2>${message}</h2>
+                <p style="font-size: 1.2rem;">Lograste <strong>${score}</strong> aciertos de ${totalPerSession}</p>
+                <button onclick="location.reload()" class="option" style="margin-top:20px; width:100%">Reiniciar Entrenamiento</button>
+            `;
+        }
+
+        function updateStats() {
+            document.getElementById('current-q').innerText = currentIndex + (currentIndex < totalPerSession ? 1 : 0);
+            document.getElementById('score').innerText = score;
+        }
+
+        initQuiz();
+    </script>
+</body>
+</html>
